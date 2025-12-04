@@ -110,30 +110,47 @@ Authorization: my-super-secret-api-key-123
   "description": "Set up management microservice",
   "status": "PENDING"
 }
+```
 
-📋 Get all tasks
-GET /tasks
+---
 
-🔍 Filter tasks by status (GSI)
-GET /tasks?status=PENDING
+### 📋 Get All Tasks  
+**GET /tasks**
 
-🔎 Get a single task
-GET /tasks/{taskId}
+---
 
-✏ Update a task
-PUT /tasks/{taskId}
+### 🔍 Filter Tasks (GSI)  
+**GET /tasks?status=PENDING**
 
+---
+
+### 🔎 Get a Single Task  
+**GET /tasks/{taskId}**
+
+---
+
+### ✏ Update a Task  
+**PUT /tasks/{taskId}**
+
+```json
 {
   "status": "IN_PROGRESS",
   "title": "Updated task title"
 }
+```
 
-❌ Delete a task
-DELETE /tasks/{taskId}
+---
 
-Expected response:
+### ❌ Delete a Task  
+**DELETE /tasks/{taskId}**
 
+Expected:
+
+```
 204 No Content
+```
+
+---
 🧬 Lambda Functions
 ### management-service-handler (CRUD Lambda)
 Handles:
