@@ -75,7 +75,7 @@ GET /tasks?status=PENDING
 ---
 
 ## 🧱 Architecture
-
+```text
 (Client)
 |
 | Authorization Header
@@ -88,7 +88,7 @@ API Gateway (REST)
 |
 v
 DynamoDB (ManagementTasks)
-
+```
 
 ---
 
@@ -191,70 +191,80 @@ Returns IAM Allow or Deny
 
 Wildcard ARN ensures the authorizer works for all endpoints in /dev/*
 
-🔧 Deployment Steps (Final Working Version)
-1️⃣ Create DynamoDB Table
+## 🛠️ Deployment Steps (Final Working Version)
 
-Name: ManagementTasks
-PK: taskId
+### 1️⃣ Create DynamoDB Table
 
-Add GSI
+**Name:** `ManagementTasks`  
+**PK:** `taskId`
+
+Add GSI:
+
+```makefile
 Name: StatusIndex
 PK: status
 SK: createdAt
+```
 
-2️⃣ Create IAM Role for CRUD Lambda
+### 2️⃣ Create IAM Role for CRUD Lambda
 
-Attach:
+Attach the following AWS-managed policies:
 
-AWSLambdaBasicExecutionRole
+- `AWSLambdaBasicExecutionRole`
+- `AmazonDynamoDBFullAccess` *(simple for demo; restrict in production)*
 
-AmazonDynamoDBFullAccess (simple for demo; restrict in production)
 
-3️⃣ Create CRUD Lambda
+### 3️⃣ Create CRUD Lambda
 
-Runtime: Python 3.12
-Handler: management_service_handler.lambda_handler
+- **Runtime:** Python 3.12  
+- **Handler:** `management_service_handler.lambda_handler`
 
-Environment variables:
+#### Environment Variables
 
+```ini
 TABLE_NAME=ManagementTasks
 STATUS_INDEX_NAME=StatusIndex
+```
 
+Deploy the Lambda
 
-Deploy.
+#### 4️⃣ Create Authorizer Lambda
 
-4️⃣ Create Authorizer Lambda
+- **Runtime:** Python 3.12
 
-Runtime: Python 3.12
-
-Environment variable:
-
+#### Environment variable:
+```ini
 EXPECTED_API_KEY=my-super-secret-api-key-123
+```
 
+Deploy the authorizer Lambda
 
-Deploy.
-
-5️⃣ Create API Gateway REST API
-Resources
+#### 5️⃣ Create API Gateway REST API
+#### Resources
+```ini
 /tasks
 /tasks/{taskId}
-
+```
 
 Attach:
 
-Integration → CRUD Lambda
+Integration → **CRUD Lambda**
 
-Authorizer → ManagementApiAuthorizer
+Authorizer → **ManagementApiAuthorizer**
 
 Apply authorization to all methods.
 
-6️⃣ Deploy to Stage dev
+#### 6️⃣ Deploy to Stage dev
 
 Your base URL will look like:
-
+```ini
 https://<rest-api-id>.execute-api.<region>.amazonaws.com/dev
+```
+# 
 
-📁 Project Structure
+## 📁 Project Structure
+
+```text
 management-microservice/
 │
 ├── lambda/
@@ -263,13 +273,12 @@ management-microservice/
 │
 ├── README.md
 └── .gitignore
+```
+
 
 🔒 Security Notes
 
-Never commit actual API keys to GitHub
-
-Use environment variables + IAM roles
-
-For production, use AWS Secrets Manager
-
-CORS is handled within Lambda responses
+- **Never commit actual API keys to GitHub**
+- **Use environment variables + IAM roles**
+- **For production, use AWS Secrets Manager**
+- **CORS is handled within Lambda responses**
