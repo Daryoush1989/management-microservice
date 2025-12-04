@@ -151,100 +151,102 @@ Expected:
 ```
 
 ---
-🧬 Lambda Functions
-### management-service-handler (CRUD Lambda)
-Handles:
 
-Create task
+### 🧬 Lambda Functions
 
-List tasks (optionally filtered)
+#### `management-service-handler` (CRUD Lambda)
 
-Filter tasks using GSI
+- **Create Task**
+- **List Tasks** (with optional filters)
+- **Filter Tasks using GSI**
+- **Get Task**
+- **Update Task**
+- **Delete Task**
+- **DynamoDB Access**
+- **CORS Response Handling**
+- **Timestamp Generation**
 
-Get task
-
-Update task
-
-Delete task
-
-DynamoDB access
-
-CORS response handling
-
-Timestamp generation
-
-Environment variables:
-
+✔ Required Environment Variables
 TABLE_NAME=ManagementTasks
 STATUS_INDEX_NAME=StatusIndex
+
 management-api-authorizer (Custom Token Authorizer)
-Reads:
-
+✔ Reads
 authorizationToken
-Validates against:
 
-
+✔ Validates Against
 EXPECTED_API_KEY
-Returns IAM Allow/Deny using wildcard resource.
+
+✔ Behavior
+
+Returns IAM Allow or Deny
+
+Wildcard ARN ensures the authorizer works for all endpoints in /dev/*
 
 🔧 Deployment Steps (Final Working Version)
-1️⃣ Create DynamoDB table
+1️⃣ Create DynamoDB Table
+
 Name: ManagementTasks
+PK: taskId
 
-Partition key: taskId
-
-Add GSI:
-
+Add GSI
 Name: StatusIndex
-
 PK: status
-
 SK: createdAt
 
 2️⃣ Create IAM Role for CRUD Lambda
+
 Attach:
 
 AWSLambdaBasicExecutionRole
 
-AmazonDynamoDBFullAccess (demo simplification)
+AmazonDynamoDBFullAccess (simple for demo; restrict in production)
 
 3️⃣ Create CRUD Lambda
-Runtime: Python 3.12
 
+Runtime: Python 3.12
 Handler: management_service_handler.lambda_handler
 
 Environment variables:
 
 TABLE_NAME=ManagementTasks
 STATUS_INDEX_NAME=StatusIndex
+
+
 Deploy.
 
 4️⃣ Create Authorizer Lambda
+
 Runtime: Python 3.12
 
-Env var:
-
+Environment variable:
 
 EXPECTED_API_KEY=my-super-secret-api-key-123
+
+
 Deploy.
 
 5️⃣ Create API Gateway REST API
-Resources:
-
-
+Resources
 /tasks
 /tasks/{taskId}
-All methods → integration = CRUD Lambda
 
-Authorization for each method → ManagementApiAuthorizer
 
-6️⃣ Deploy API to Stage dev
-Your base URL becomes:
+Attach:
 
+Integration → CRUD Lambda
+
+Authorizer → ManagementApiAuthorizer
+
+Apply authorization to all methods.
+
+6️⃣ Deploy to Stage dev
+
+Your base URL will look like:
 
 https://<rest-api-id>.execute-api.<region>.amazonaws.com/dev
-📁 Project Structure
 
+📁 Project Structure
 management-microservice/
 │
 ├── lambda/
@@ -255,11 +257,11 @@ management-microservice/
 └── .gitignore
 
 🔒 Security Notes
-Do NOT commit real API keys to GitHub
 
-Use IAM roles + environment variables
+Never commit actual API keys to GitHub
 
-Use Secrets Manager for production
+Use environment variables + IAM roles
 
-CORS handled inside Lambda responses
+For production, use AWS Secrets Manager
 
+CORS is handled within Lambda responses
