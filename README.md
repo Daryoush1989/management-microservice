@@ -1,92 +1,122 @@
-🧩 Management Microservice (Serverless CRUD API on AWS)
+# 🧩 Management Microservice (Serverless CRUD API on AWS)
 
-A fully serverless task management microservice built using:
+A fully serverless task-management microservice built using:
 
-AWS API Gateway (REST API)
-
-AWS Lambda (Python)
-
-DynamoDB (NoSQL, GSI included)
-
-Custom Lambda TOKEN Authorizer
-
-IAM for secure, least-privilege access
+- **AWS API Gateway (REST API)**
+- **AWS Lambda (Python)**
+- **DynamoDB (NoSQL with GSI support)**
+- **Custom Lambda TOKEN Authorizer**
+- **IAM** for secure, least-privilege access
 
 This project demonstrates real-world serverless backend design, authentication, event-driven compute, and DynamoDB modeling patterns.
 
-🚀 Features
-✔ Full CRUD API
-Method	Path	Description
-POST	/tasks	Create a task
-GET	/tasks	Get all tasks
-GET	/tasks?status=PENDING	Filter tasks using GSI
-GET	/tasks/{taskId}	Get specific task
-PUT	/tasks/{taskId}	Update task
-DELETE	/tasks/{taskId}	Delete task
-✔ Secure API with Custom Lambda Authorizer
+---
+
+## 🚀 Features
+
+### ✔ Full CRUD API
+
+| Method | Path                 | Description                     |
+|--------|----------------------|---------------------------------|
+| POST   | /tasks               | Create a task                   |
+| GET    | /tasks               | Get all tasks                   |
+| GET    | /tasks?status=PENDING | Filter using GSI by status      |
+| GET    | /tasks/{taskId}      | Get one task                    |
+| PUT    | /tasks/{taskId}      | Update task                     |
+| DELETE | /tasks/{taskId}      | Delete task                     |
+
+---
+
+## 🔐 Secure API with Custom Lambda Authorizer
 
 Every request must include:
 
 Authorization: <api-key>
 
+The authorizer:
+
+- Reads: `authorizationToken`
+- Validates against Lambda environment variable:
 
 Validates against Lambda environment variable:
 
-EXPECTED_API_KEY
+EXPECTED_API_KEY = <your-secret-key>
 
+- Returns IAM `"Allow"` with **wildcard ARN**:
 
 Returns IAM Allow policy with wildcard ARN, enabling all routes in the dev stage:
 
 arn:aws:execute-api:<region>:<accountId>:<apiId>/<stage>/*/*
 
-🗃 DynamoDB Data Store
+This fix ensures **ALL routes** under the development stage are authorized.
 
-Primary table for tasks.
-Includes a Global Secondary Index to filter by status in real time.
+---
 
-📊 Data Model (DynamoDB)
-Main Table: ManagementTasks
-Field	Type	Description
-taskId	String	Primary partition key
-title	String	Required
-description	String	Optional
-status	String	PENDING, IN_PROGRESS, DONE
-createdAt	String	ISO-8601 timestamp
-updatedAt	String	ISO-8601 timestamp
-GSI: StatusIndex
-Attribute	Role
-status	Partition key
-createdAt	Sort key
+## 🗃 DynamoDB Data Store
+
+- **Primary table** for tasks
+- Includes **Global Secondary Index (GSI)** to filter by status in real time
+
+---
+
+## 📊 Data Model (DynamoDB)
+
+### **Main Table: `ManagementTasks`**
+
+| Field       | Type   | Description                 |
+|-------------|--------|-----------------------------|
+| taskId      | String | Primary partition key       |
+| title       | String | Required                    |
+| description | String | Optional                    |
+| status      | String | PENDING, IN_PROGRESS, DONE  |
+| createdAt   | String | ISO-8601 timestamp          |
+| updatedAt   | String | ISO-8601 timestamp          |
+
+### **Global Secondary Index: `StatusIndex`**
+
+| Attribute | Role            |
+|-----------|-----------------|
+| status    | Partition key   |
+| createdAt | Sort key        |
 
 Used for:
 
 GET /tasks?status=PENDING
 
-🧱 Architecture
-(Client)
-   |
-   | Authorization header
-   v
-API Gateway (REST)
-   |
-   |--> Custom Lambda Authorizer
-   |
-   |--> Lambda Proxy Integration
-            |
-            v
-     management-service-handler (CRUD Lambda)
-            |
-            v
-       DynamoDB Table
+---
 
-🧪 Testing
+## 🧱 Architecture
+
+(Client)
+|
+| Authorization Header
+v
+API Gateway (REST)
+|
+| ---> Custom Lambda Authorizer (Token validation)
+|
+| ---> Lambda Proxy Integration → CRUD Lambda
+|
+v
+DynamoDB (ManagementTasks)
+
+
+---
+
+## 🧪 Testing
+
+### Every request requires:
+
 Required header for every request:
 Authorization: my-super-secret-api-key-123
 
-➕ Create a task
+---
 
-POST /tasks
+### ➕ Create a task
 
+**POST /tasks**
+
+```json
 {
   "title": "First management task",
   "description": "Set up management microservice",
