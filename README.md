@@ -33,22 +33,14 @@ Every request must include:
 
 Authorization: <api-key>
 
-kotlin
-Copy code
-
 The **authorizer Lambda** validates this against:
 
 EXPECTED_API_KEY=<your-secret-key>
-
-sql
-Copy code
 
 A correct key returns an IAM **Allow** policy with wildcard ARN:
 
 arn:aws:execute-api:<region>:<account-id>:<restApiId>/<stage>//
 
-yaml
-Copy code
 
 This fix ensures **ALL routes** are authorized (not just one).
 
@@ -80,9 +72,6 @@ Used for:
 
 GET /tasks?status=PENDING
 
-yaml
-Copy code
-
 ---
 
 ## 🧱 Architecture
@@ -100,8 +89,6 @@ API Gateway (REST)
 v
 DynamoDB (ManagementTasks)
 
-yaml
-Copy code
 
 ---
 
@@ -111,8 +98,6 @@ Copy code
 
 Authorization: my-super-secret-api-key-123
 
-yaml
-Copy code
 
 ---
 
@@ -125,6 +110,7 @@ Copy code
   "description": "Set up management microservice",
   "status": "PENDING"
 }
+
 📋 Get all tasks
 GET /tasks
 
@@ -137,19 +123,16 @@ GET /tasks/{taskId}
 ✏ Update a task
 PUT /tasks/{taskId}
 
-json
-Copy code
 {
   "status": "IN_PROGRESS",
   "title": "Updated task title"
 }
+
 ❌ Delete a task
 DELETE /tasks/{taskId}
 
 Expected response:
 
-css
-Copy code
 204 No Content
 🧬 Lambda Functions
 ### management-service-handler (CRUD Lambda)
@@ -175,20 +158,15 @@ Timestamp generation
 
 Environment variables:
 
-ini
-Copy code
 TABLE_NAME=ManagementTasks
 STATUS_INDEX_NAME=StatusIndex
 management-api-authorizer (Custom Token Authorizer)
 Reads:
 
-nginx
-Copy code
 authorizationToken
 Validates against:
 
-nginx
-Copy code
+
 EXPECTED_API_KEY
 Returns IAM Allow/Deny using wildcard resource.
 
@@ -220,8 +198,6 @@ Handler: management_service_handler.lambda_handler
 
 Environment variables:
 
-ini
-Copy code
 TABLE_NAME=ManagementTasks
 STATUS_INDEX_NAME=StatusIndex
 Deploy.
@@ -231,16 +207,14 @@ Runtime: Python 3.12
 
 Env var:
 
-ini
-Copy code
+
 EXPECTED_API_KEY=my-super-secret-api-key-123
 Deploy.
 
 5️⃣ Create API Gateway REST API
 Resources:
 
-bash
-Copy code
+
 /tasks
 /tasks/{taskId}
 All methods → integration = CRUD Lambda
@@ -250,12 +224,10 @@ Authorization for each method → ManagementApiAuthorizer
 6️⃣ Deploy API to Stage dev
 Your base URL becomes:
 
-php-template
-Copy code
+
 https://<rest-api-id>.execute-api.<region>.amazonaws.com/dev
 📁 Project Structure
-python
-Copy code
+
 management-microservice/
 │
 ├── lambda/
@@ -264,6 +236,7 @@ management-microservice/
 │
 ├── README.md
 └── .gitignore
+
 🔒 Security Notes
 Do NOT commit real API keys to GitHub
 
