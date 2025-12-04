@@ -166,16 +166,24 @@ Expected:
 - **CORS Response Handling**
 - **Timestamp Generation**
 
-✔ Required Environment Variables
+### ✔ Required Environment Variables
+
+```ini
 TABLE_NAME=ManagementTasks
 STATUS_INDEX_NAME=StatusIndex
+```
 
 management-api-authorizer (Custom Token Authorizer)
-✔ Reads
-authorizationToken
 
-✔ Validates Against
+### ✔ Reads
+```ini
+authorizationToken
+```
+
+### ✔ Validates Against
+```ini
 EXPECTED_API_KEY
+```
 
 ✔ Behavior
 
