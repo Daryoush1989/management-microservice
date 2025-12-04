@@ -1,21 +1,21 @@
 🧩 Management Microservice (Serverless CRUD API on AWS)
 
-A fully serverless task-management backend using:
+A fully serverless task management microservice built using:
 
-API Gateway (REST API)
+AWS API Gateway (REST API)
 
 AWS Lambda (Python)
 
-DynamoDB (GSI included)
+DynamoDB (NoSQL, GSI included)
 
 Custom Lambda TOKEN Authorizer
 
-IAM least-privilege access
+IAM for secure, least-privilege access
 
-This project demonstrates real-world serverless backend design, authentication, event-driven compute, and DynamoDB modeling.
+This project demonstrates real-world serverless backend design, authentication, event-driven compute, and DynamoDB modeling patterns.
 
 🚀 Features
-✅ Full CRUD API
+✔ Full CRUD API
 Method	Path	Description
 POST	/tasks	Create a task
 GET	/tasks	Get all tasks
@@ -23,22 +23,28 @@ GET	/tasks?status=PENDING	Filter tasks using GSI
 GET	/tasks/{taskId}	Get specific task
 PUT	/tasks/{taskId}	Update task
 DELETE	/tasks/{taskId}	Delete task
-🔐 Custom Lambda TOKEN Authorizer
+✔ Secure API with Custom Lambda Authorizer
 
-Requires header:
+Every request must include:
 
 Authorization: <api-key>
 
 
 Validates against Lambda environment variable:
+
 EXPECTED_API_KEY
 
-Returns wildcard IAM Allow policy:
-arn:aws:execute-api:<region>:<acct>:<apiId>/<stage>/*/*
 
-Ensures secure access to all routes.
+Returns IAM Allow policy with wildcard ARN, enabling all routes in the dev stage:
 
-🗃 DynamoDB Data Model
+arn:aws:execute-api:<region>:<accountId>:<apiId>/<stage>/*/*
+
+🗃 DynamoDB Data Store
+
+Primary table for tasks.
+Includes a Global Secondary Index to filter by status in real time.
+
+📊 Data Model (DynamoDB)
 Main Table: ManagementTasks
 Field	Type	Description
 taskId	String	Primary partition key
@@ -53,27 +59,31 @@ status	Partition key
 createdAt	Sort key
 
 Used for:
+
 GET /tasks?status=PENDING
 
 🧱 Architecture
 (Client)
    |
-   | Authorization Header
+   | Authorization header
    v
 API Gateway (REST)
    |
-   |---> Custom Lambda Authorizer
+   |--> Custom Lambda Authorizer
    |
-   |---> CRUD Lambda (Proxy Integration)
-                 |
-                 v
-             DynamoDB Table
+   |--> Lambda Proxy Integration
+            |
+            v
+     management-service-handler (CRUD Lambda)
+            |
+            v
+       DynamoDB Table
 
-🧪 Testing the API
-Required Header
+🧪 Testing
+Required header for every request:
 Authorization: my-super-secret-api-key-123
 
-➕ Create a Task
+➕ Create a task
 
 POST /tasks
 
@@ -83,19 +93,19 @@ POST /tasks
   "status": "PENDING"
 }
 
-📋 Get All Tasks
+📋 Get all tasks
 
 GET /tasks
 
-🔍 Filter by Status
+🔍 Filter by status (GSI)
 
 GET /tasks?status=PENDING
 
-🔎 Get One Task
+🔎 Get one task
 
 GET /tasks/{taskId}
 
-✏ Update a Task
+✏ Update a task
 
 PUT /tasks/{taskId}
 
@@ -104,103 +114,114 @@ PUT /tasks/{taskId}
   "title": "Updated task title"
 }
 
-❌ Delete a Task
+❌ Delete a task
 
 DELETE /tasks/{taskId}
-Expected: 204 No Content
+
+Expected:
+
+204 No Content
 
 🧬 Lambda Functions
-1️⃣ management-service-handler (CRUD Lambda)
+management-service-handler (CRUD Lambda)
 
-Handles all REST operations
+Handles all CRUD logic
 
 Parses API Gateway proxy events
 
 Generates timestamps
 
-Updates only provided fields
+Queries DynamoDB + GSI
 
-Applies CORS
+Dynamically updates only provided fields
 
-Supports GSI query sorting
+Returns CORS-enabled responses
 
-Required Environment Variables:
-
+Environment variables:
 TABLE_NAME = ManagementTasks
 STATUS_INDEX_NAME = StatusIndex
 
-2️⃣ management-api-authorizer (Token Authorizer)
+management-api-authorizer (Custom Token Authorizer)
 
-Validates authorizationToken
+Reads:
 
-Compares with:
-
-EXPECTED_API_KEY = <your-secret-key>
+authorizationToken
 
 
-Returns wildcard IAM policy to allow all CRUD routes
+Validates with:
 
-🔧 Deployment Steps
+EXPECTED_API_KEY
+
+
+Returns IAM Allow policy using wildcard ARN:
+
+arn:aws:execute-api:<region>:<acct>:<apiId>/<stage>/*/*
+
+🔧 Deployment Steps (Final Working Version)
 1. Create DynamoDB Table
 
-Table name: ManagementTasks
+Table: ManagementTasks
 
 PK: taskId
 
-GSI:
+Create GSI:
+
+Name: StatusIndex
 
 PK: status
 
 SK: createdAt
 
-Name: StatusIndex
-
-2. IAM Role for CRUD Lambda
+2. Create IAM Role for CRUD Lambda
 
 Attach:
 
 AWSLambdaBasicExecutionRole
 
-AmazonDynamoDBFullAccess (simplify; apply least privilege later)
+AmazonDynamoDBFullAccess (simple version for demo)
 
-3. Deploy CRUD Lambda
-
-Runtime: Python 3.12
-
-Environment Variables:
-
-TABLE_NAME = ManagementTasks
-STATUS_INDEX_NAME = StatusIndex
-
-4. Deploy Authorizer Lambda
+3. Deploy CRUD Lambda (management-service-handler)
 
 Runtime: Python 3.12
 
-Environment Variable:
+Add environment variables
+
+Paste CRUD code
+
+Deploy
+
+4. Deploy Authorizer Lambda (management-api-authorizer)
+
+Runtime: Python 3.12
+
+Add environment variable:
 
 EXPECTED_API_KEY = my-super-secret-api-key-123
 
-5. Configure API Gateway
+
+Paste authorizer code
+
+Deploy
+
+5. Create API Gateway REST API
 
 Resources:
 
 /tasks
-
 /tasks/{taskId}
 
-Integration:
 
-CRUD Lambda
+For each method:
 
-Authorization:
+Integration → CRUD Lambda
 
-Custom Authorizer Lambda
+Authorizer → management-api-authorizer
 
-Apply to ALL methods
+Enable for all methods
 
 6. Deploy API to Stage dev
 
-Base URL format:
+Base URL example:
 
 https://<rest-api-id>.execute-api.<region>.amazonaws.com/dev
 
@@ -218,12 +239,6 @@ management-microservice/
 
 Never commit real API keys to GitHub
 
-Store secrets in:
+Use Lambda environment variables, IAM roles, and Secrets Manager (production)
 
-Lambda environment variables
-
-IAM roles
-
-AWS Secrets Manager (production)
-
-CORS handled inside Lambda responses
+CORS returned from Lambda for simplicity
