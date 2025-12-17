@@ -1,13 +1,20 @@
 # Python
 __pycache__/
 *.py[cod]
+*.egg-info/
 
-# Virtualenv
+# Virtual environments
 .venv/
+venv/
 
-# Editor
+# CDK output
+cdk.out/
+
+# OS / editor
+.DS_Store
+Thumbs.db
 .vscode/
 
-# OS
-Thumbs.db
-.DS_Store
+# Env / secrets
+.env
+.env.*
