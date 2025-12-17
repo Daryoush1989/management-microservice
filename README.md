@@ -1,189 +1,179 @@
-Management Microservice (AWS Serverless, CDK)
+# Management Microservice (AWS Serverless, CDK)
+
+A **production-style serverless task management microservice** built on AWS using **API Gateway, Lambda, DynamoDB, and AWS CDK (Python)**.
+
+This portfolio project demonstrates **real-world cloud engineering practices**, including secure API design, Infrastructure as Code, and a clean migration from manual AWS Console prototyping to fully automated CDK deployment.
+
+---
+
+## 🧭 Project Background
+
+This project intentionally reflects a **realistic cloud development lifecycle**:
+
+1. Initial architecture prototyped manually using the AWS Console  
+2. Debugging real-world AWS integration issues (IAM, Lambda, API Gateway)  
+3. Final, production-ready implementation using **AWS CDK (Python)**  
+
+Only the **CDK implementation** is deployed. Console-era experimentation is documented but intentionally excluded from deployment.
+
+---
+
+## ✨ What This Project Demonstrates
+
+- Serverless backend architecture on AWS  
+- Secure REST API design using a **custom Lambda Token Authorizer**  
+- Full CRUD operations backed by DynamoDB  
+- Infrastructure as Code with AWS CDK (Python)  
+- Cost-aware cloud engineering with easy teardown (`cdk destroy`)  
+- Clean migration from manual setup → reproducible deployment  
+
+---
+
+## 🏗 Architecture
+
+![Architecture Diagram](docs/architecture.png)
+
+### Request Flow
+
+1. Client (Postman or PowerShell) sends an HTTPS request  
+2. API Gateway invokes a Lambda Token Authorizer  
+3. Authorization token is validated  
+4. Authorized requests are routed to the Task Service Lambda  
+5. Lambda performs CRUD operations on DynamoDB  
+6. Response is returned to the client  
+
+---
+
+## 🔐 Authentication Model
+
+- Custom **Lambda Token Authorizer**
+- Token is passed via the `Authorization` header
+- Token value is validated against an environment variable
+- Requests without a valid token are denied
+
+> ⚠️ This model is intentionally simple to demonstrate how API Gateway authorizers work internally.  
+> In production, this could be replaced with **Cognito / OAuth / JWT**.
+
+---
+
+## 🧰 Tech Stack
+
+- **Amazon API Gateway (REST API)**
+- **AWS Lambda**
+  - Task Service Lambda
+  - Token Authorizer Lambda
+- **Amazon DynamoDB**
+- **AWS CDK (Python)**
+- **CloudWatch Logs**
+
+---
+
+## 📁 Repository Structure
+
+management-microservice/
+│
+├── cdk/ # Infrastructure as Code (AWS CDK)
+│ ├── app.py
+│ ├── management_microservice_stack.py
+│ └── lambdas/
+│ ├── management_service_handler.py
+│ └── management_api_authorizer.py
+│
+├── docs/
+│ └── architecture.png # Architecture diagram
+│
+├── .gitignore
+└── README.md
 
 
-A production-style serverless task management microservice built on AWS using API Gateway, Lambda, DynamoDB, and AWS CDK (Python).
+> The `cdk/` directory represents the **authoritative, production-ready implementation**.
 
-This project demonstrates end-to-end backend design, secure API access, Infrastructure as Code, and a clean migration from AWS Console prototyping to a fully reproducible CDK deployment.
+---
 
-🧠 Project Overview
+## 🚀 Deployment
 
-The service exposes a REST API for managing tasks with full CRUD functionality:
+### Prerequisites
 
-Create tasks
+- AWS CLI configured
+- AWS CDK installed
+- Python 3.10+
 
-List tasks
+### Install Dependencies
 
-Retrieve a task by ID
-
-Update task status/details
-
-Delete tasks
-
-Security is enforced via a custom Lambda Token Authorizer.
-All infrastructure is defined using AWS CDK (Python).
-
-🏗 Architecture
-
-AWS Services Used
-
-API Gateway (REST API)
-
-AWS Lambda
-
-Task service Lambda
-
-Custom token authorizer Lambda
-
-Amazon DynamoDB
-
-AWS CDK (Python)
-
-CloudWatch Logs
-
-High-level flow:
-
-Client sends HTTP request
-
-API Gateway invokes Lambda Authorizer
-
-Authorizer validates token
-
-API Gateway routes request to service Lambda
-
-Lambda performs DynamoDB operation
-
-Response returned to client
-
-🔐 Authentication Model
-
-This project uses a custom token-based Lambda Authorizer.
-
-Token is sent via the Authorization header
-
-Token value is validated against an environment variable
-
-Requests without a valid token are denied
-
-⚠️ This is intentional to demonstrate how API Gateway authorizers work internally.
-In production, this could be replaced with JWT / Cognito / OAuth.
-
-🧱 Infrastructure as Code (CDK)
-
-All infrastructure is defined using AWS CDK (Python):
-
-API Gateway routes and methods
-
-Lambda functions and permissions
-
-DynamoDB table
-
-Environment variables
-
-IAM roles and policies
-
-This ensures:
-
-Repeatable deployments
-
-Easy teardown (cdk destroy)
-
-No manual console configuration required
-
-🚀 Deployment
-
-Prerequisites
-
-AWS CLI configured
-
-AWS CDK installed
-
-Python 3.10+
-
-1️⃣ Install dependencies
+```bash
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-2️⃣ Bootstrap CDK (one-time per account/region)
+Bootstrap CDK (one-time per account/region)
 cdk bootstrap aws://<ACCOUNT_ID>/<REGION>
 
-3️⃣ Deploy
+Deploy
 cdk deploy
 
 
 After deployment, CDK outputs the API endpoint URL.
 
-🧪 API Usage Examples
-Environment variables (example)
+🧪 API Usage Examples (PowerShell)
 $BASE_URL = "https://<api-id>.execute-api.<region>.amazonaws.com/dev"
 $AUTH = "my-super-secret-token"
 
-➕ Create Task
+Create Task
 $body = @{
   title = "First task"
   description = "Created via API"
   status = "PENDING"
 } | ConvertTo-Json
 
-Invoke-RestMethod `
-  -Method POST `
+Invoke-RestMethod -Method POST `
   -Uri "$BASE_URL/tasks" `
   -Headers @{ Authorization = $AUTH } `
   -ContentType "application/json" `
   -Body $body
 
-📋 List Tasks
-Invoke-RestMethod `
-  -Method GET `
+List Tasks
+Invoke-RestMethod -Method GET `
   -Uri "$BASE_URL/tasks" `
   -Headers @{ Authorization = $AUTH }
 
-🔍 Get Task by ID
-Invoke-RestMethod `
-  -Method GET `
+Get Task by ID
+Invoke-RestMethod -Method GET `
   -Uri "$BASE_URL/tasks/{taskId}" `
   -Headers @{ Authorization = $AUTH }
 
-✏️ Update Task
-$update = @{
-  status = "IN_PROGRESS"
-} | ConvertTo-Json
+Update Task
+$update = @{ status = "IN_PROGRESS" } | ConvertTo-Json
 
-Invoke-RestMethod `
-  -Method PUT `
+Invoke-RestMethod -Method PUT `
   -Uri "$BASE_URL/tasks/{taskId}" `
   -Headers @{ Authorization = $AUTH } `
   -ContentType "application/json" `
   -Body $update
 
-🗑 Delete Task
-Invoke-RestMethod `
-  -Method DELETE `
+Delete Task
+Invoke-RestMethod -Method DELETE `
   -Uri "$BASE_URL/tasks/{taskId}" `
   -Headers @{ Authorization = $AUTH }
 
-🧹 Cleanup (Cost Control)
+💰 Cost Control / Cleanup
 
-To avoid AWS charges:
+To avoid AWS charges, all resources can be destroyed with:
 
 cdk destroy
 
-
-This removes all deployed resources.
-
-🧭 Design Decisions
+🧠 Design Decisions
 
 Started with AWS Console prototyping to validate architecture quickly
 
 Migrated to CDK for repeatability and best practices
 
-Used custom authorizer to demonstrate deep API Gateway understanding
+Used a custom authorizer to demonstrate deep API Gateway understanding
 
 Chose DynamoDB for low-latency, serverless persistence
 
 Explicit CORS handling for real-world API usage
 
-🚧 Future Improvements
+🔮 Future Improvements
 
 JWT-based authentication (Cognito / OAuth)
 
@@ -195,13 +185,13 @@ CI/CD pipeline (GitHub Actions)
 
 Structured logging & tracing
 
-Unit & integration tests
+Unit and integration tests
 
-📌 Why This Project Matters
+⭐ Why This Project Matters
 
 This repository demonstrates:
 
-Serverless backend architecture
+Real-world serverless backend architecture
 
 Secure API design
 
@@ -209,188 +199,12 @@ Infrastructure as Code
 
 AWS best practices
 
-Cost awareness
+Cost-aware cloud engineering
 
 Migration from manual setup to automated deployment
-=======
-(Repo cleanup: convert CDK submodule into standard source directory)
-
-A production-style serverless task management microservice built on AWS using API Gateway, Lambda, DynamoDB, and AWS CDK (Python).
-
-This project demonstrates end-to-end backend design, secure API access, Infrastructure as Code, and a clean migration from AWS Console prototyping to a fully reproducible CDK deployment.
-
 
 👤 Author
 
 Daryoush
 Cloud / Backend Engineering Portfolio Project
-=======
-🧠 Project Overview
 
-The service exposes a REST API for managing tasks with full CRUD functionality:
-
-Create tasks
-
-List tasks
-
-Retrieve a task by ID
-
-Update task status/details
-
-Delete tasks
-
-Security is enforced via a custom Lambda Token Authorizer. All infrastructure is defined using AWS CDK (Python).
-
-🏗 Architecture
-
-AWS Services Used
-
-API Gateway (REST API)
-
-AWS Lambda
-
-Task service Lambda
-
-Custom token authorizer Lambda
-
-Amazon DynamoDB
-
-AWS CDK (Python)
-
-CloudWatch Logs
-
-High-level flow:
-
-Client sends HTTP request
-
-API Gateway invokes Lambda Authorizer
-
-Authorizer validates token
-
-API Gateway routes request to service Lambda
-
-Lambda performs DynamoDB operation
-
-Response returned to client
-
-🔐 Authentication Model
-
-This project uses a custom token-based Lambda Authorizer.
-
-Token is sent via the Authorization header
-
-Token value is validated against an environment variable
-
-Requests without a valid token are denied
-
-⚠️ This is intentional to demonstrate how API Gateway authorizers work internally. In production, this could be replaced with JWT / Cognito / OAuth.
-
-🧱 Infrastructure as Code (CDK)
-
-All infrastructure is defined using AWS CDK (Python):
-
-API Gateway routes and methods
-
-Lambda functions and permissions
-
-DynamoDB table
-
-Environment variables
-
-IAM roles and policies
-
-This ensures:
-
-Repeatable deployments
-
-Easy teardown (cdk destroy)
-
-No manual console configuration required
-
-🚀 Deployment
-
-Prerequisites
-
-AWS CLI configured
-
-AWS CDK installed
-
-Python 3.10+
-
-1️⃣ Install dependencies python -m venv .venv source .venv/bin/activate # Windows: .venv\Scripts\activate pip install -r requirements.txt
-
-2️⃣ Bootstrap CDK (one-time per account/region) cdk bootstrap aws://<ACCOUNT_ID>/
-
-3️⃣ Deploy cdk deploy
-
-After deployment, CDK outputs the API endpoint URL.
-
-🧪 API Usage Examples Environment variables (example) $BASE_URL = "https://.execute-api..amazonaws.com/dev" $AUTH = "my-super-secret-token"
-
-➕ Create Task $body = @{ title = "First task" description = "Created via API" status = "PENDING" } | ConvertTo-Json
-
-Invoke-RestMethod -Method POST -Uri "$BASE_URL/tasks" -Headers @{ Authorization = $AUTH } -ContentType "application/json" ` -Body $body
-
-📋 List Tasks Invoke-RestMethod -Method GET -Uri "$BASE_URL/tasks" ` -Headers @{ Authorization = $AUTH }
-
-🔍 Get Task by ID Invoke-RestMethod -Method GET -Uri "$BASE_URL/tasks/{taskId}" ` -Headers @{ Authorization = $AUTH }
-
-✏️ Update Task $update = @{ status = "IN_PROGRESS" } | ConvertTo-Json
-
-Invoke-RestMethod -Method PUT -Uri "$BASE_URL/tasks/{taskId}" -Headers @{ Authorization = $AUTH } -ContentType "application/json" ` -Body $update
-
-🗑 Delete Task Invoke-RestMethod -Method DELETE -Uri "$BASE_URL/tasks/{taskId}" ` -Headers @{ Authorization = $AUTH }
-
-🧹 Cleanup (Cost Control)
-
-To avoid AWS charges:
-
-cdk destroy
-
-This removes all deployed resources.
-
-🧭 Design Decisions
-
-Started with AWS Console prototyping to validate architecture quickly
-
-Migrated to CDK for repeatability and best practices
-
-Used custom authorizer to demonstrate deep API Gateway understanding
-
-Chose DynamoDB for low-latency, serverless persistence
-
-Explicit CORS handling for real-world API usage
-
-🚧 Future Improvements
-
-JWT-based authentication (Cognito / OAuth)
-
-OpenAPI specification
-
-Pagination & filtering
-
-CI/CD pipeline (GitHub Actions)
-
-Structured logging & tracing
-
-Unit & integration tests
-
-📌 Why This Project Matters
-
-This repository demonstrates:
-
-Serverless backend architecture
-
-Secure API design
-
-Infrastructure as Code
-
-AWS best practices
-
-Cost awareness
-
-Migration from manual setup to automated deployment
-
-👤 Author
-
-Daryoush Cloud / Backend Engineering Portfolio Project
