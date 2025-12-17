@@ -212,7 +212,7 @@ Cost awareness
 
 Migration from manual setup to automated deployment
 
-This is not a tutorial clone — it reflects real engineering decisions and trade-offs.
+
 
 👤 Author
 
