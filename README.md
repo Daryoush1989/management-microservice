@@ -157,9 +157,18 @@ Invoke-RestMethod -Method DELETE `
 
 💰 Cost Control / Cleanup
 
-To avoid AWS charges, all resources can be destroyed with:
+All billable AWS resources created by this project (Lambda, API Gateway, DynamoDB, IAM roles, and S3 assets) were explicitly deleted after testing to prevent ongoing charges.
 
-cdk destroy
+During teardown, the CloudFormation stack entered a state where:
+
+Application resources had already been removed
+
+The CDK execution role was no longer assumable
+
+The stack remained in an UPDATE_COMPLETE state with no active resources
+
+As a result, the stack could not be deleted via CDK without re-bootstrapping the environment.
+Because CloudFormation itself does not incur cost and no underlying resources remained, no further action was required.
 
 🧠 Design Decisions
 
@@ -178,8 +187,6 @@ Explicit CORS handling for real-world API usage
 JWT-based authentication (Cognito / OAuth)
 
 OpenAPI specification
-
-Pagination & filtering
 
 CI/CD pipeline (GitHub Actions)
 
